@@ -1,11 +1,12 @@
 mod deck;
+mod game;
 
 fn main() {
-    let mut players: [deck::Hand; 4] = [deck::Hand::new(),deck::Hand::new(),deck::Hand::new(),deck::Hand::new()];
+    let mut players: [deck::Hand; 4] = [deck::Hand::new(); 4];
     let mut community = deck::Community::new();
 
     let mut deck = deck::Deck::new();
-
+ 
     deck.shuffle();
     println!("deck: {:?}", deck);
 

@@ -1,6 +1,6 @@
 use rand::seq::SliceRandom;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct Hand {
     cards: [Card; 2],
 }
