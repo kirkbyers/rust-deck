@@ -246,3 +246,58 @@ impl Deck {
         self.dealt += 1;
     }
 }
+
+#[cfg(test)]
+mod tests {
+
+    #[test]
+    fn test_hand_value() {
+        use crate::deck::{Card, Hand, Community, Suit, Rank};
+
+        let mut hand_1 = Hand {
+            cards: [Card {
+                suit: Suit::Clubs,
+                rank: Rank::Ace,
+            }, Card {
+                suit: Suit::Clubs,
+                rank: Rank::King,
+            }],
+            value: (0, 0),
+        };
+        let mut hand_2 = Hand {
+            cards: [Card {
+                suit: Suit::Diamonds,
+                rank: Rank::Two,
+            }, Card {
+                suit: Suit::Spades,
+                rank: Rank::Seven,
+            }],
+            value: (0, 0),
+        };
+
+        let mut community = Community{
+            cards: [Card {
+                suit: Suit::Clubs,
+                rank: Rank::Ace,
+            }, Card {
+                suit: Suit::Clubs,
+                rank: Rank::King,
+            }, Card {
+                suit: Suit::Clubs,
+                rank: Rank::Queen,
+            }, Card {
+                suit: Suit::Clubs,
+                rank: Rank::Jack,
+            }, Card {
+                suit: Suit::Clubs,
+                rank: Rank::Ten,
+            }],
+        };
+
+        let hand_value = hand_1.hand_value(&community);
+        assert_eq!(hand_value, (10, Rank::Ace as u8));
+
+        let hand_value = hand_2.hand_value(&community);
+        assert_eq!(hand_value, (0, Rank::Seven as u8));
+    }
+}
