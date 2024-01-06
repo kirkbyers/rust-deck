@@ -1,5 +1,4 @@
-mod deck;
-mod game;
+use rust_deck::deck;
 
 fn main() {
     let mut players: [deck::Hand; 4] = [deck::Hand::new(); 4];
