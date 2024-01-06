@@ -18,6 +18,14 @@ impl Hand {
         }
     }
 
+    pub fn reset(&mut self) {
+        self.cards = [Card {
+            suit: Suit::None,
+            rank: Rank::None,
+        }; 2];
+        self.value = (ScoringHands::None, 0);
+    }
+
     pub fn fill(&mut self, deck: &mut Deck) {
         self.cards[0] = deck.deal();
         self.cards[1] = deck.deal();
@@ -171,6 +179,13 @@ impl Community {
         }
     }
 
+    pub fn reset(&mut self) {
+        self.cards = [Card {
+            suit: Suit::None,
+            rank: Rank::None,
+        }; 5];
+    }
+
     pub fn flop(&mut self, deck: &mut Deck) -> [Card; 3] {
         let cards = [deck.deal(), deck.deal(), deck.deal()];
         self.cards[0] = cards[0];
@@ -227,7 +242,7 @@ pub enum Rank {
     Ace,
 }
 
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq, PartialOrd)]
 pub enum ScoringHands {
     None,
     HighCard,
