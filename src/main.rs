@@ -1,7 +1,8 @@
+use rust_deck::hand::Hand;
 use rust_deck::deck;
 
 fn main() {
-    let mut players: [deck::Hand; 4] = [deck::Hand::new(); 4];
+    let mut players: [Hand; 4] = [Hand::new(); 4];
     let mut community = deck::Community::new();
 
     let mut deck = deck::Deck::new();

@@ -1,9 +1,5 @@
-use rust_deck::deck::Hand;
-use rust_deck::deck::Community;
-use rust_deck::deck::Card;
-use rust_deck::deck::Suit;
-use rust_deck::deck::Rank;
-use rust_deck::deck::ScoringHands;
+use rust_deck::hand::{Hand, ScoringHands};
+use rust_deck::deck::{Community, Card, Suit, Rank};
 
 #[test]
 fn test_hand_value() {

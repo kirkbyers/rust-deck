@@ -1,8 +1,8 @@
-use crate::deck::Hand;
+use crate::hand::Hand;
 use crate::deck::Deck;
 use crate::deck::Community;
 use crate::deck::Rank;
-use crate::deck::ScoringHands;
+use crate::hand::ScoringHands;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 
