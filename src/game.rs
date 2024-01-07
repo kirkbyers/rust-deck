@@ -50,7 +50,7 @@ impl Game {
         }
     }
 
-    pub fn should_advance_state(&self) -> bool {
+    fn should_advance_state(&self) -> bool {
         let mut active_players = 0;
         for player in self.players.iter() {
             if player.is_active() {
@@ -70,12 +70,12 @@ impl Game {
         result
     }
 
-    pub fn payout(&mut self, player_idx: usize) {
+    fn payout_player_idx(&mut self, player_idx: usize) {
         self.players[player_idx].bank += self.pot;
         self.pot = 0.0;
     }
 
-    pub fn advance_state(&mut self) {
+    fn advance_state(&mut self) {
         match self.state {
             GameState::PreFlop => {
                 self.state = GameState::Flop;
@@ -144,7 +144,7 @@ impl Game {
                 // TODO: fix the sorting
                 active_player_hand_values.sort_by(|a, b| b.partial_cmp(a).unwrap());
                 let winner_idx = active_player_hand_values[0].2;
-                self.payout(winner_idx);
+                self.payout_player_idx(winner_idx);
             },
             GameState::Showdown => {
                 self.state = GameState::PreFlop;
