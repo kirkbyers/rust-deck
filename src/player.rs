@@ -81,6 +81,9 @@ impl Player {
             PlayerAction::Raise => {
                 self.raise(amount.unwrap());
             },
+            PlayerAction::AllIn => {
+                self.all_in();
+            },
             PlayerAction::None => {
                 // Do nothing
             },
@@ -94,5 +97,6 @@ pub enum PlayerAction {
     Check,
     Call,
     Raise,
+    AllIn,
     None,
 }
