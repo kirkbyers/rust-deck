@@ -112,24 +112,49 @@ impl Player {
                 let action: Vec<&str> = action.split(" ").collect();
                 match action[0] {
                     "fold" => {
+                        // TODO
                         self.fold();
                         PlayerAction::Fold
                     },
                     "check" => {
-                        self.check();
-                        PlayerAction::Check
+                        if amount.unwrap() > 0.0 {
+                            writeln!(&mut write, "Cannot check. Must at least call.").expect("Unable to write");
+                            self.prompt_action(reader, write, amount)
+                        } else {
+                            self.check();
+                            PlayerAction::Check
+                        }
                     },
                     "call" => {
+                        // TODO
                         self.call(amount.unwrap());
                         PlayerAction::Call
                     },
                     "all-in" => {
+                        // TODO
                         self.all_in();
                         PlayerAction::AllIn
                     },
                     "raise" => {
-                        self.raise(amount.unwrap());
-                        PlayerAction::Raise
+                        match action.len() {
+                            2 => {
+                                let raise = action[1].parse::<f32>();
+                                match raise {
+                                    Ok(raise) => {
+                                        self.raise(amount.unwrap_or(0.0) + raise);
+                                        PlayerAction::Raise
+                                    },
+                                    Err(_) => {
+                                        writeln!(&mut write, "Invalid amount").expect("Unable to write");
+                                        self.prompt_action(reader, write, amount)
+                                    },
+                                }
+                            },
+                            _ => {
+                                writeln!(&mut write, "Invalid amount").expect("Unable to write");
+                                self.prompt_action(reader, write, amount)
+                            },
+                        }
                     },
                     _ => {
                         writeln!(&mut write, "Invalid action").expect("Unable to write");
