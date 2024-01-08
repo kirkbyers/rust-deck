@@ -92,6 +92,8 @@ impl Player {
         }
     }
 
+    // Reader + Writer injection from
+    // https://stackoverflow.com/questions/28370126/how-can-i-test-stdin-and-stdout
     pub fn prompt_action<R, W>(&mut self, mut reader: R, mut write: W, amount: Option<f32>) -> PlayerAction 
     where
         R: BufRead,
