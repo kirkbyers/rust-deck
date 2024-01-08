@@ -1,5 +1,7 @@
 use crate::hand::Hand;
+use std::io::{stdout, stdin, BufRead, Write};
 
+#[derive(Debug)]
 pub struct Player {
     id: u8,
     name: String,
@@ -89,9 +91,59 @@ impl Player {
             },
         }
     }
+
+    pub fn prompt_action<R, W>(&mut self, mut reader: R, mut write: W, amount: Option<f32>) -> PlayerAction 
+    where
+        R: BufRead,
+        W: Write,
+    {
+        let _ = stdout().flush();
+        let mut action = String::new();
+        writeln!(&mut write, "Player {}'s turn", self.id).expect("Unable to write");
+        writeln!(&mut write, "Player {}'s bank: {}", self.id, self.bank).expect("Unable to write");
+        writeln!(&mut write, "Current bid: {}", amount.unwrap_or(0.0)).expect("Unable to write");
+        writeln!(&mut write, "Player {}'s hand: {:?}", self.id, self.hand).expect("Unable to write");
+        writeln!(&mut write, "Enter action: [fold|check|call|all-in|raise] [amount]").expect("Unable to write");
+        match reader.read_line(&mut action) {
+            Ok(_) => {
+                let action = action.trim().to_lowercase();
+                let action: Vec<&str> = action.split(" ").collect();
+                match action[0] {
+                    "fold" => {
+                        self.fold();
+                        PlayerAction::Fold
+                    },
+                    "check" => {
+                        self.check();
+                        PlayerAction::Check
+                    },
+                    "call" => {
+                        self.call(amount.unwrap());
+                        PlayerAction::Call
+                    },
+                    "all-in" => {
+                        self.all_in();
+                        PlayerAction::AllIn
+                    },
+                    "raise" => {
+                        self.raise(amount.unwrap());
+                        PlayerAction::Raise
+                    },
+                    _ => {
+                        writeln!(&mut write, "Invalid action").expect("Unable to write");
+                        self.prompt_action(reader, write, amount)
+                    },
+                }
+            },
+            Err(_) => {
+                println!("Invalid action");
+                self.prompt_action(reader, write, amount)
+            },
+        }
+    }
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 pub enum PlayerAction {
     Fold,
     Check,
