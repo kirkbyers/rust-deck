@@ -52,22 +52,6 @@ impl Game {
         }
     }
 
-    // We probably don't need this function
-    fn should_advance_state(&self) -> bool {
-        let mut active_players = 0;
-        for player in self.players.iter() {
-            if player.is_active() {
-                active_players += 1;
-            }
-        }
-
-        if active_players <= 1 {
-            return true;
-        }
-
-        return false;
-    }
-
     fn get_active_players(&self) -> Vec<&Player> {
         let result = self.players.iter().filter(|player| player.is_active()).collect();
         result
@@ -83,19 +67,16 @@ impl Game {
             GameState::PreFlop => {
                 self.state = GameState::Flop;
                 self.deal_community(3);
-
-                // TODO: Collect Small and Big blinds
-
-                // Set the turn to the player after the Big Blind (UTG), or the first player
-                // if there is only 2 players active
-                self.turn = 2;
+                self.community.print(std::io::stdout());
 
                  // find active players
                 let active_players = self.get_active_players();
                 let active_player_count = active_players.len();
 
                 if active_player_count == 1 {
-                    // TODO: Game over - Declare table winner
+                    // Game over - Declare table winner
+                    self.state = GameState::River;
+                    return self.advance_state();
                 }
 
                 if active_player_count == 2 {
@@ -111,7 +92,9 @@ impl Game {
                 let active_players = self.get_active_players();
                 let active_player_count = active_players.len();
                 if active_player_count == 1 {
-                    // TODO: Game over - Declare table winner
+                    // Game over - Declare table winner
+                    self.state = GameState::River;
+                    return self.advance_state();
                 }
 
                 if active_player_count == 2 {
@@ -127,7 +110,9 @@ impl Game {
                 let active_players = self.get_active_players();
                 let active_player_count = active_players.len();
                 if active_player_count == 1 {
-                    // TODO: Game over - Declare table winner
+                    // Game over - Declare table winner
+                    self.state = GameState::River;
+                    return self.advance_state();
                 }
 
                 if active_player_count == 2 {
@@ -147,17 +132,27 @@ impl Game {
                 // TODO: fix the sorting
                 active_player_hand_values.sort_by(|a, b| b.partial_cmp(a).unwrap());
                 let winner_idx = active_player_hand_values[0].2;
+                println!("Winner: {}", self.players[winner_idx].name);
+                println!("Hand: {:?}", self.players[winner_idx].hand);
                 self.payout_player_idx(winner_idx);
             },
             GameState::Showdown => {
                 self.state = GameState::PreFlop;
                 self.deck.shuffle();
                 self.community.reset();
+                self.current_bid = 0.0;
+                self.pot = 0.0;
                 for player in self.players.iter_mut() {
-                    player.hand.reset();
-                    player.last_action = PlayerAction::None;
+                    player.reset();
                     player.hand.fill(&mut self.deck);
                 }
+                // Shift the player order by 1
+                let first_player = self.players.remove(0);
+                self.players.push(first_player);
+                self.turn = 2;
+
+                // Collect blinds
+                
             },
             GameState::Closed => {
                 println!("Thanks for playing!");
@@ -184,15 +179,30 @@ impl Game {
         }
     }
 
-    pub fn loop_turn(&mut self) {
-        match self.state {
-            GameState::PreFlop => {},
-            GameState::Flop => {},
-            GameState::Turn => {},
-            GameState::River => {},
-            GameState::Showdown => {},
-            GameState::Closed => {},
+    pub fn loop_turns(&mut self) {
+        let player = &mut self.players[self.turn];
+        if player.is_active() {
+            let (action, pot_contribution) = player.prompt_action(std::io::stdin().lock(), std::io::stdout(), Some(self.current_bid));
+            self.pot += pot_contribution;
+            if action == PlayerAction::Raise {
+                let raised_bid = player.bid - self.current_bid;
+                self.current_bid += raised_bid;
+            } else if action == PlayerAction::AllIn {
+                let raised_bid = player.bid - self.current_bid;
+                if raised_bid > self.current_bid {
+                    self.current_bid += raised_bid;
+                }
+            }
         }
-        self.advance_state();
+        let player_last_actions = self.get_active_players().iter().map(|player| player.last_action).collect::<Vec<PlayerAction>>();
+        // If all players have checked, folded, called, or gone all in, then advance the state
+        if player_last_actions.iter().all(|&action| action == PlayerAction::Check || action == PlayerAction::Fold || action == PlayerAction::Call || action == PlayerAction::AllIn) {
+            self.advance_state();
+        }
+        self.turn += 1;
+        if self.turn >= self.players.len() {
+            self.turn = 0;
+        }
+        return self.loop_turns();
     }
 }

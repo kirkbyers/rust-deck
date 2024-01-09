@@ -1,4 +1,5 @@
 use rand::seq::SliceRandom;
+use std::io::Write;
 
 #[derive(Debug)]
 pub struct Community {
@@ -41,6 +42,16 @@ impl Community {
         self.cards[4] = deck.deal();
 
         self.cards[4]
+    }
+
+    pub fn print<W>(&self, mut w: W) 
+    where W: Write
+    {
+        let mut cards = String::new();
+        for card in self.cards.iter() {
+            cards.push_str(&format!("{:?} ", card));
+        }
+        writeln!(w, "Community: {}", cards).unwrap();
     }
 }
 

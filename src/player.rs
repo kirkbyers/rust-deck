@@ -4,7 +4,7 @@ use std::io::{stdout, stdin, BufRead, Write};
 #[derive(Debug)]
 pub struct Player {
     id: u8,
-    name: String,
+    pub name: String,
     pub bank: f32,
     pub hand: Hand,
     pub last_action: PlayerAction,
@@ -21,6 +21,12 @@ impl Player {
             last_action: PlayerAction::None,
             bid: 0.0,
         }
+    }
+
+    pub fn reset(&mut self) {
+        self.hand.reset();
+        self.last_action = PlayerAction::None;
+        self.bid = 0.0;
     }
 
     pub fn raise(&mut self, total_bid: f32) -> f32 {
@@ -70,29 +76,6 @@ impl Player {
 
     pub fn is_active(&self) -> bool {
         self.bank > 0.0 && [PlayerAction::Fold, PlayerAction::AllIn].contains(&self.last_action) == false
-    }
-
-    pub fn take_action(&mut self, action: PlayerAction, amount: Option<f32>) {
-        match action {
-            PlayerAction::Fold => {
-                self.fold();
-            },
-            PlayerAction::Check => {
-                self.check();
-            },
-            PlayerAction::Call => {
-                self.call(amount.unwrap());
-            },
-            PlayerAction::Raise => {
-                self.raise(amount.unwrap());
-            },
-            PlayerAction::AllIn => {
-                self.all_in();
-            },
-            PlayerAction::None => {
-                // Do nothing
-            },
-        }
     }
 
     // Reader + Writer injection from
@@ -155,7 +138,7 @@ impl Player {
                                         if raised_ammount == 0.0 {
                                             writeln!(
                                                 &mut write, 
-                                                "Insufficient funds to raise.\nCurrent bid is {}.\nCurrent bank is {}", current_bid.unwrap_or(0.0), self.bank
+                                                "Insufficient funds to raise.\nCurrent table bid is {}.\nCurrent bank is {}\nYour current bid is {}", current_bid.unwrap_or(0.0), self.bank, self.bid
                                             ).expect("Unable to write");
                                         }
                                         (PlayerAction::Raise, raised_ammount)
