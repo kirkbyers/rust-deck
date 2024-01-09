@@ -11,6 +11,7 @@ struct Game {
     turn: usize,
     state: GameState,
     pot: f32,
+    current_bid: f32,
     blind: f32,
 }
 
@@ -46,10 +47,12 @@ impl Game {
             state: GameState::PreFlop,
             pot: 0.0,
             blind: 0.25,
+            current_bid: 0.0,
             community,
         }
     }
 
+    // We probably don't need this function
     fn should_advance_state(&self) -> bool {
         let mut active_players = 0;
         for player in self.players.iter() {
@@ -161,6 +164,7 @@ impl Game {
                 std::process::exit(0);
             },
         }
+        self.current_bid = 0.0;
     }
 
     pub fn deal_community(&mut self, count: u8) {

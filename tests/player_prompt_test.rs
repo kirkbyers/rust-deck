@@ -13,5 +13,5 @@ fn test_player_prompt() {
     let input = b"fold";
 
     let action = player.prompt_action(&input[..], &mut output, None);
-    assert_eq!(action, rust_deck::player::PlayerAction::Fold);
+    assert_eq!(action, (rust_deck::player::PlayerAction::Fold, 0.0));
 }
