@@ -22,12 +22,8 @@ jobs:
       run: cargo test --verbose
     - name: Build release
       run: cargo build --release
-    - uses: Roang-zero1/github-create-release-action@v2
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    - name: Upload release asset
-      uses: Roang-zero1/github-upload-release-artifacts-action@v2
+    - name: Archive release
+      uses: actions/upload-artifact@v2
       with:
-        args: "target/release/rust_deck"
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        name: release
+        path: target/release/rust_deck
