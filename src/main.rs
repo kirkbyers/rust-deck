@@ -1,29 +1,6 @@
-use rust_deck::hand::Hand;
-use rust_deck::deck;
+use rust_deck::game::Game;
 
 fn main() {
-    let mut players: [Hand; 4] = [Hand::new(); 4];
-    let mut community = deck::Community::new();
-
-    let mut deck = deck::Deck::new();
- 
-    deck.shuffle();
-    println!("deck: {:?}", deck);
-
-    for player in players.iter_mut() {
-        player.fill(&mut deck);
-        println!("player: {:?}", player)
-    }
-
-    let flop = community.flop(&mut deck);
-    println!("flop: {:?}", flop);
-
-    let turn = community.turn(&mut deck);
-    println!("turn: {:?}", turn);
-
-    let river = community.river(&mut deck);
-    println!("river: {:?}", river);
-
-    println!("community: {:?}", community);
-    println!("deck::dealt: {:?}", deck.dealt)
+    let mut game = Game::new(4);
+    game.start();
 }

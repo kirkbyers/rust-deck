@@ -29,6 +29,18 @@ impl Player {
         self.bid = 0.0;
     }
 
+    pub fn blind(&mut self, blind: f32) -> f32 {
+        let blind = if blind > self.bank {
+            self.bank
+        } else {
+            blind
+        };
+        self.bank -= blind;
+        self.bid += blind;
+
+        blind
+    }
+
     pub fn raise(&mut self, total_bid: f32) -> f32 {
         let bid_diff = total_bid - self.bid;
         if bid_diff > self.bank {

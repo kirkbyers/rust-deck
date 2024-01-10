@@ -1,10 +1,10 @@
 use crate::deck::{Deck, Community, Rank};
 use crate::hand::ScoringHands;
-use crate::player::{Player, PlayerAction};
+use crate::player::{Player, PlayerAction, self};
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 
-struct Game {
+pub struct Game {
     players: Vec<Player>,
     deck: Deck,
     community: Community,
@@ -52,6 +52,12 @@ impl Game {
         }
     }
 
+    pub fn start(&mut self) {
+        self.state = GameState::Showdown;
+        self.advance_state();
+        self.loop_turns();
+    }
+
     fn get_active_players(&self) -> Vec<&Player> {
         let result = self.players.iter().filter(|player| player.is_active()).collect();
         result
@@ -65,6 +71,7 @@ impl Game {
     fn advance_state(&mut self) {
         match self.state {
             GameState::PreFlop => {
+                println!("\n\n\nStarting Flop");
                 self.state = GameState::Flop;
                 self.deal_community(3);
                 self.community.print(std::io::stdout());
@@ -73,20 +80,25 @@ impl Game {
                 let active_players = self.get_active_players();
                 let active_player_count = active_players.len();
 
+                for player in self.players.iter_mut() {
+                    if player.is_active() {
+                        player.last_action = PlayerAction::None;
+                    }
+                }
+
                 if active_player_count == 1 {
                     // Game over - Declare table winner
                     self.state = GameState::River;
                     return self.advance_state();
                 }
 
-                if active_player_count == 2 {
-                    self.turn = 0;
-                }
+                self.turn = 0;
             },
             GameState::Flop => {
+                println!("\n\n\nStarting Turn");
                 self.state = GameState::Turn;
                 self.deal_community(1);
-                self.turn = 2;
+                self.turn = 0;
 
                 // find active players
                 let active_players = self.get_active_players();
@@ -97,14 +109,16 @@ impl Game {
                     return self.advance_state();
                 }
 
-                if active_player_count == 2 {
-                    self.turn = 0;
+                for player in self.players.iter_mut() {
+                    if player.is_active() {
+                        player.last_action = PlayerAction::None;
+                    }
                 }
             },
             GameState::Turn => {
+                println!("\n\n\nStarting River");
                 self.state = GameState::River;
                 self.deal_community(1);
-                self.turn = 2;
 
                  // find active players
                 let active_players = self.get_active_players();
@@ -115,11 +129,16 @@ impl Game {
                     return self.advance_state();
                 }
 
-                if active_player_count == 2 {
-                    self.turn = 0;
+                for player in self.players.iter_mut() {
+                    if player.is_active() {
+                        player.last_action = PlayerAction::None;
+                    }
                 }
+
+                self.turn = 0;
             },
             GameState::River => {
+                println!("\n\n\nStarting Showdown");
                 self.state = GameState::Showdown;
                 // Determine winner
                 let active_players = self.get_active_players();
@@ -137,24 +156,44 @@ impl Game {
                 self.payout_player_idx(winner_idx);
             },
             GameState::Showdown => {
+                println!("\n\n\nStarting PreFlop");
                 self.state = GameState::PreFlop;
+                let active_players = self.get_active_players();
+                let active_player_count = active_players.len();
+                if active_player_count == 1 {
+                    // Game over - Declare table winner
+                    self.state = GameState::Closed;
+                    return self.advance_state();
+                }
                 self.deck.shuffle();
                 self.community.reset();
+                self.community.print(std::io::stdout());
                 self.current_bid = 0.0;
                 self.pot = 0.0;
-                for player in self.players.iter_mut() {
-                    player.reset();
-                    player.hand.fill(&mut self.deck);
-                }
                 // Shift the player order by 1
                 let first_player = self.players.remove(0);
                 self.players.push(first_player);
+                for player in self.players.iter_mut() {
+                    if player.is_active() {
+                        player.reset();
+                        player.hand.fill(&mut self.deck);
+                    }
+                    if self.pot == 0.0 {
+                        // Collect small blind
+                        self.pot += player.blind(self.blind);
+                    } else if self.pot < self.blind * 3.0 {
+                        // Collect big blind
+                        self.pot += player.blind(self.blind * 2.0);
+                    }
+                }
                 self.turn = 2;
-
-                // Collect blinds
-                
+                if active_player_count == 2 {
+                    self.turn = 0;
+                }
             },
             GameState::Closed => {
+                let active_players = self.get_active_players();
+                println!("\n\n\nTable Winner: {}", active_players[0].name);
                 println!("Thanks for playing!");
                 std::process::exit(0);
             },
@@ -177,9 +216,18 @@ impl Game {
             self.community.cards[index] = card;
             index += 1;
         }
+
+        // TODO: make argument for printing injected into this function
+        self.community.print(std::io::stdout());
     }
 
     pub fn loop_turns(&mut self) {
+        let player_last_actions = self.get_active_players().iter().map(|player| player.last_action).collect::<Vec<PlayerAction>>();
+        // If all players have checked, folded, called, or gone all in, then advance the state
+        if player_last_actions.iter().all(|&action| action == PlayerAction::Check || action == PlayerAction::Fold || action == PlayerAction::Call || action == PlayerAction::AllIn) {
+            self.advance_state();
+        }
+
         let player = &mut self.players[self.turn];
         if player.is_active() {
             let (action, pot_contribution) = player.prompt_action(std::io::stdin().lock(), std::io::stdout(), Some(self.current_bid));
@@ -193,11 +241,6 @@ impl Game {
                     self.current_bid += raised_bid;
                 }
             }
-        }
-        let player_last_actions = self.get_active_players().iter().map(|player| player.last_action).collect::<Vec<PlayerAction>>();
-        // If all players have checked, folded, called, or gone all in, then advance the state
-        if player_last_actions.iter().all(|&action| action == PlayerAction::Check || action == PlayerAction::Fold || action == PlayerAction::Call || action == PlayerAction::AllIn) {
-            self.advance_state();
         }
         self.turn += 1;
         if self.turn >= self.players.len() {
